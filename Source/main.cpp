@@ -86,7 +86,7 @@ int main(int argc, char* argv[]) {
 	GameState gameState = MENU;
 
 	//boolean values to control movement through the states
-	bool menu, instructions, players1, players2, win, lose, quit;
+	bool menu, instructions, players1, players2, win, lose, quit = false;
 
 
     // The window is open: could enter program loop here (see SDL_PollEvent())
