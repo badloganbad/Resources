@@ -18,7 +18,18 @@
 #include <iostream>
 using namespace std;
 
-// code for frame rate independence
+// variables for the background movement and position
+//int for the background
+int bkgdSpeed = 100;
+
+// create the SDL Rectangle for the background texture's position and size - background 1 and 2
+SDL_Rect bkgd1Pos, bkgd2Pos;
+
+// Background float vars for movement
+float b1pos_X = 0, b1pos_Y = 0;
+float b2pos_X = 0, b2pos_Y = -768;
+
+// code for frame rate independence - deltaTime var initialization
 float deltaTime = 0.0;
 int thisTime = 0;
 int lastTime = 0;
@@ -78,7 +89,7 @@ int main(int argc, char* argv[]) {
     //create the renderer
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 
-    //***** Create Background ******
+    //***** Create Background - START ******
     string BKGDpath = s_cwd_images + "/bkgd.png";
 
     // create a SDL surface to hold the background image
@@ -100,7 +111,7 @@ int main(int argc, char* argv[]) {
    // SDL_FreeSurface(surface);
 
     // create the SDL_Rectangel for the texture's position and size -x,y,w,h
-    SDL_Rect bkgd1Pos;
+  //  SDL_Rect bkgd1Pos;
 
     // set the X, Y, W, and H for the Rectangle
     bkgd1Pos.x = 0;
@@ -109,7 +120,7 @@ int main(int argc, char* argv[]) {
     bkgd1Pos.h = 768;
 
     // create the SDL_Rectangel for the texture's position and size -x,y,w,h
-    SDL_Rect bkgd2Pos;
+   // SDL_Rect bkgd2Pos;
 
     // set the X, Y, W, and H for the Rectangle
     bkgd2Pos.x = 0;
@@ -118,17 +129,17 @@ int main(int argc, char* argv[]) {
     bkgd2Pos.h = 768;
 
     // set speed for background
-    int bkgdSpeed = 100;
+   // int bkgdSpeed = 100;
 
     // set temp variables to hold movement - background 1
-    float BG1pos_X = 0, BG1pos_Y = 0;
+   // float BG1pos_X = 0, BG1pos_Y = 0;
 
     // set temp variables to hold movement - background 2
-    float BG2pos_X = 0, BG2pos_Y = -768;
+   // float BG2pos_X = 0, BG2pos_Y = -768;
 
     //***************CREATE CURSOR*****************
     //Create Cursor
-    string CURSORpath = s_cwd_images + "/cursor2.png";
+    string CURSORpath = s_cwd_images + "/cursor3.png";
 
     // create a SDL surface to hold the background image
     surface = IMG_Load(CURSORpath.c_str());
@@ -145,7 +156,7 @@ int main(int argc, char* argv[]) {
     // set the X, Y, W, and H for the Rectangle
     cursorPos.x = 0;
     cursorPos.y = 0;
-    cursorPos.w = 90;
+    cursorPos.w = 64;
     cursorPos.h = 64;
 
 
@@ -203,12 +214,10 @@ int main(int argc, char* argv[]) {
 
 				while(menu)
 				{
-					// set up frame rate for the section, or case
+					// Create deltaTime - for frame rate independence
 					thisTime = SDL_GetTicks();
-					deltaTime = (float)(thisTime - lastTime)/1000;
+					deltaTime = (float)(thisTime - lastTime) / 1000;
 					lastTime = thisTime;
-
-
 
 					//check for input events
 					if(SDL_PollEvent(&event))
@@ -254,39 +263,39 @@ int main(int argc, char* argv[]) {
 
 					// Update
 
-					//Update background 1
-					BG1pos_Y += (bkgdSpeed * 1) * deltaTime;
+					//Update background 1's float position values
+					b1pos_Y += (bkgdSpeed * 1) * deltaTime;
 
 					// set the new bkgd1 position
-					bkgd1Pos.y = (int)(BG1pos_Y + 0.5f);
+					bkgd1Pos.y = (int)(b1pos_Y + 0.5f);
 
 					// reset when off the bottom of the screen
 					if(bkgd1Pos.y  >= 768)
 					{
 						bkgd1Pos.y = -768;
-						BG1pos_Y = bkgd1Pos.y;
+						b1pos_Y = bkgd1Pos.y;
 					}
 
 					//Update background 2
-					BG2pos_Y += (bkgdSpeed * 1) * deltaTime;
+					b2pos_Y += (bkgdSpeed * 1) * deltaTime;
 
 					// set the new bkgd2 position
-					bkgd2Pos.y = (int)(BG2pos_Y + 0.5f);
+					bkgd2Pos.y = (int)(b2pos_Y + 0.5f);
 
 					// reset when off the bottom of the screen
 					if(bkgd2Pos.y  >= 768)
 					{
 						bkgd2Pos.y = -768;
-						BG2pos_Y = bkgd2Pos.y;
+						b2pos_Y = bkgd2Pos.y;
 					}
 
 
 					// Start Drawing
 
-					// Clear SDL renderer
+					// Clear SDL renderer - clear the old screen buffer
 					SDL_RenderClear(renderer);
 
-					// Draw the bkgd image
+					// Draw the Bkgd1 image
 					SDL_RenderCopy(renderer, bkgd1, NULL, &bkgd1Pos);
 
 					// Draw the bkgd image
@@ -295,7 +304,7 @@ int main(int argc, char* argv[]) {
 					// Draw the cursor image
 					SDL_RenderCopy(renderer, cursor, NULL, &cursorPos);
 
-					// SDL Render present
+					// SDL Render present - draw new, updated screen
 					SDL_RenderPresent(renderer);
 
 
