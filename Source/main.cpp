@@ -37,12 +37,12 @@ int thisTime = 0;
 int lastTime = 0;
 
 // move the background
-void UpdateBackground() {
+void UpdateBackground(float deltaTime) {
 	//Update background 1's float position values
 	b1pos_Y += (bkgdSpeed * 1) * deltaTime;
 
 	// set the new bkgd1 position
-	bkgd1Pos.y = (int)(b1pos_Y + 0.5f);
+	bkgd1Pos.y = (int) (b1pos_Y + 0.5f);
 
 	// reset the float position values of Bkgd1 when off the bottom of the screen
 	if (bkgd1Pos.y >= 768) {
@@ -54,7 +54,7 @@ void UpdateBackground() {
 	b2pos_Y += (bkgdSpeed * 1) * deltaTime;
 
 	// set the new bkgd2 position
-	bkgd2Pos.y = (int)(b2pos_Y + 0.5f);
+	bkgd2Pos.y = (int) (b2pos_Y + 0.5f);
 
 	// reset the float position values of Bkgd1 when off the bottom of the screen
 	if (bkgd2Pos.y >= 768) {
@@ -62,6 +62,85 @@ void UpdateBackground() {
 		b2pos_Y = bkgd2Pos.y;
 	}
 }
+
+//*****************************************NEW******************************
+//Analog joystick dead zone
+const int JOYSTICK_DEAD_ZONE = 8000;
+
+//jostick direction vars
+float xDir, yDir;
+
+// cursor flaost vars or movement
+float pos_X, pos_Y;
+
+//create SDL Rectangle for the cursor
+SDL_Rect cursorPos, activePos;
+
+//var from cursor speed
+int cursorSpeed = 400;
+
+void moveCursor(const SDL_ControllerAxisEvent event) {
+//check joystick 0 - first player
+	if (event.which == 0) {
+		//check x axis
+		if (event.axis == 0) {
+			if (event.value < -JOYSTICK_DEAD_ZONE) {
+				xDir = -1.0f;
+			} else if (event.value > JOYSTICK_DEAD_ZONE) {
+				xDir = 1.0f;
+			} else {
+				xDir = 0.0f;
+			}
+		}
+		//check y axis
+		if (event.axis == 1) {
+			if (event.value < -JOYSTICK_DEAD_ZONE) {
+				yDir = -1.0f;
+			} else if (event.value > JOYSTICK_DEAD_ZONE) {
+				yDir = 1.0f;
+			} else {
+				yDir = 0.0f;
+			}
+		}
+	}
+}
+
+void UpdateCursor(float deltaTime) {
+	//Update Cursor
+	pos_X += (cursorSpeed * xDir) * deltaTime;
+	pos_Y += (cursorSpeed * yDir) * deltaTime;
+
+	cursorPos.x = (int) (pos_X + 0.5f);
+	cursorPos.y = (int) (pos_Y + 0.5f);
+
+	activePos.x = cursorPos.x;
+	activePos.y = cursorPos.y;
+
+	if (cursorPos.x < 0) {
+		cursorPos.x = 0;
+		pos_X = cursorPos.x;
+	}
+
+	if (cursorPos.x > 1024 - cursorPos.w) {
+		cursorPos.x = 1024 - cursorPos.w;
+		pos_X = cursorPos.x;
+	}
+
+	if (cursorPos.y < 0) {
+		cursorPos.y = 0;
+		pos_Y = cursorPos.y;
+	}
+
+	if (cursorPos.y > 768 - cursorPos.h) {
+		cursorPos.y = 768 - cursorPos.h;
+		pos_Y = cursorPos.y;
+	}
+
+}
+
+//variables for all menus button over
+bool players1Over = false, players2Over = false, instructionsOver = false,
+		quitOver = false, menuOver = false, playOver = false;
 
 int main(int argc, char* argv[]) {
 
@@ -109,12 +188,12 @@ int main(int argc, char* argv[]) {
 
 	// Create an application window with the following settings:
 	window = SDL_CreateWindow("An SDL2 window",                  // window title
-		SDL_WINDOWPOS_UNDEFINED,           // initial x position
-		SDL_WINDOWPOS_UNDEFINED,           // initial y position
-		1024,                               // width, in pixels
-		768,                               // height, in pixels
-		SDL_WINDOW_OPENGL                  // flags - see below
-		);
+			SDL_WINDOWPOS_UNDEFINED,           // initial x position
+			SDL_WINDOWPOS_UNDEFINED,           // initial y position
+			1024,                               // width, in pixels
+			768,                               // height, in pixels
+			SDL_WINDOW_OPENGL                  // flags - see below
+			);
 
 	// Check that the window was successfully created
 	if (window == NULL) {
@@ -536,7 +615,7 @@ int main(int argc, char* argv[]) {
 	SDL_FreeSurface(surface);
 
 	// create the SDL_Rectangel for the texture's position and size -x,y,w,h
-	SDL_Rect cursorPos, activePos;
+	//SDL_Rect cursorPos, activePos;
 
 	// set the X, Y, W, and H for the Rectangle - for the cursor graphic
 	cursorPos.x = 0;
@@ -551,7 +630,7 @@ int main(int argc, char* argv[]) {
 	activePos.h = 10;
 
 	// var from the cursor speed
-	int cursorSpeed = 400;
+	//int cursorSpeed = 400;
 
 	//************* Create Cursor - END ******************
 
@@ -593,7 +672,7 @@ int main(int argc, char* argv[]) {
 			while (menu) {
 				// Create deltaTime - for frame rate independence
 				thisTime = SDL_GetTicks();
-				deltaTime = (float)(thisTime - lastTime) / 1000;
+				deltaTime = (float) (thisTime - lastTime) / 1000;
 				lastTime = thisTime;
 
 				//check for input events
@@ -609,33 +688,53 @@ int main(int argc, char* argv[]) {
 					case SDL_CONTROLLERBUTTONDOWN:
 						if (event.cdevice.which == 0) {
 							if (event.cbutton.button
-								== SDL_CONTROLLER_BUTTON_A) {
-								menu = false;
-								gameState = INSTRUCTIONS;
-							}
-							if (event.cbutton.button
-								== SDL_CONTROLLER_BUTTON_B) {
-								menu = false;
-								gameState = PLAYERS1;
-							}
-							if (event.cbutton.button
-								== SDL_CONTROLLER_BUTTON_X) {
-								menu = false;
-								gameState = PLAYERS2;
-							}
-							if (event.cbutton.button
-								== SDL_CONTROLLER_BUTTON_Y) {
-								cout << "Y button pressed";
-								menu = false;
-								quit = true;
+									== SDL_CONTROLLER_BUTTON_A) {
+								//if player chooses 1 player game
+								if (players1Over) {
+									menu = false;
+									gameState = PLAYERS1;
+									players1Over = false;
+								}
+								if (players2Over) {
+									menu = false;
+									gameState = PLAYERS2;
+									players2Over = false;
+								}
+								if (instructionsOver) {
+									menu = false;
+									gameState = INSTRUCTIONS;
+									instructionsOver = false;
+								}
+								if (quitOver) {
+									menu = false;
+									quit = true;
+									quitOver = false;
+								}
+
 							}
 						}
+						break;
+
+						//*******************************NEW********************************
+					case SDL_CONTROLLERAXISMOTION:
+
+						moveCursor(event.caxis);
 						break;
 					}
 				}
 
 				// Update
-				UpdateBackground();
+				UpdateBackground(deltaTime);
+
+				// Update
+				UpdateCursor(deltaTime);
+
+				//check for collision between cursor active state and buttons
+				players1Over = SDL_HasIntersection(&activePos, &players1NPos);
+				players2Over = SDL_HasIntersection(&activePos, &players2NPos);
+				instructionsOver = SDL_HasIntersection(&activePos,
+						&instructNPos);
+				quitOver = SDL_HasIntersection(&activePos, &quitNPos);
 
 				// Start Drawing
 
@@ -651,17 +750,34 @@ int main(int argc, char* argv[]) {
 				// Draw the title image
 				SDL_RenderCopy(renderer, title, NULL, &titlePos);
 
+				//***
 				// Draw the 1 player button
-				SDL_RenderCopy(renderer, players1N, NULL, &players1NPos);
+				if (players1Over) {
+					SDL_RenderCopy(renderer, players1O, NULL, &players1NPos);
+				} else {
+					SDL_RenderCopy(renderer, players1N, NULL, &players1NPos);
+				}
 
 				// Draw the 2 player button
-				SDL_RenderCopy(renderer, players2N, NULL, &players2NPos);
+				if (players2Over) {
+					SDL_RenderCopy(renderer, players2O, NULL, &players2NPos);
+				} else {
+					SDL_RenderCopy(renderer, players2N, NULL, &players2NPos);
+				}
 
 				// Draw the instruct button
-				SDL_RenderCopy(renderer, instructN, NULL, &instructNPos);
+				if (instructionsOver) {
+					SDL_RenderCopy(renderer, instructO, NULL, &instructNPos);
+				} else {
+					SDL_RenderCopy(renderer, instructN, NULL, &instructNPos);
+				}
 
 				// Draw the quit game button
-				SDL_RenderCopy(renderer, quitN, NULL, &quitNPos);
+				if (quitOver) {
+					SDL_RenderCopy(renderer, quitO, NULL, &quitNPos);
+				} else {
+					SDL_RenderCopy(renderer, quitN, NULL, &quitNPos);
+				}
 
 				// Draw the cursor image
 				SDL_RenderCopy(renderer, cursor, NULL, &cursorPos);
@@ -682,7 +798,7 @@ int main(int argc, char* argv[]) {
 
 				// Create deltaTime - for frame rate independence
 				thisTime = SDL_GetTicks();
-				deltaTime = (float)(thisTime - lastTime) / 1000;
+				deltaTime = (float) (thisTime - lastTime) / 1000;
 				lastTime = thisTime;
 
 				//check for input events
@@ -698,17 +814,33 @@ int main(int argc, char* argv[]) {
 					case SDL_CONTROLLERBUTTONDOWN:
 						if (event.cdevice.which == 0) {
 							if (event.cbutton.button
-								== SDL_CONTROLLER_BUTTON_A) {
-								instructions = false;
-								gameState = MENU;
+									== SDL_CONTROLLER_BUTTON_A) {
+								//if player chooses main menu game
+								if (menuOver) {
+									instructions = false;
+									gameState = MENU;
+									menuOver = false;
+								}
 							}
 						}
 						break;
+
+					case SDL_CONTROLLERAXISMOTION:
+
+						moveCursor(event.caxis);
+						break;
+
 					}
 				}
 
 				// Update
-				UpdateBackground();
+				UpdateBackground(deltaTime);
+
+				//cursor
+				UpdateCursor(deltaTime);
+
+				//check for cursor intersection with menu button
+				menuOver = SDL_HasIntersection(&activePos, &menuNPos);
 
 				// Start Drawing
 
@@ -726,11 +858,14 @@ int main(int argc, char* argv[]) {
 
 				// Draw the instructions Graphic
 				SDL_RenderCopy(renderer, instructionsText, NULL,
-					&instructionsTextPos);
+						&instructionsTextPos);
 
 				// Draw the menu Graphic
-				SDL_RenderCopy(renderer, menuN, NULL, &menuNPos);
-
+				if (menuOver) {
+					SDL_RenderCopy(renderer, menuO, NULL, &menuNPos);
+				} else {
+					SDL_RenderCopy(renderer, menuN, NULL, &menuNPos);
+				}
 				// Draw the cursor image
 				SDL_RenderCopy(renderer, cursor, NULL, &cursorPos);
 
@@ -751,7 +886,7 @@ int main(int argc, char* argv[]) {
 
 				// Create deltaTime - for frame rate independence
 				thisTime = SDL_GetTicks();
-				deltaTime = (float)(thisTime - lastTime) / 1000;
+				deltaTime = (float) (thisTime - lastTime) / 1000;
 				lastTime = thisTime;
 
 				//check for input events
@@ -767,12 +902,12 @@ int main(int argc, char* argv[]) {
 					case SDL_CONTROLLERBUTTONDOWN:
 						if (event.cdevice.which == 0) {
 							if (event.cbutton.button
-								== SDL_CONTROLLER_BUTTON_A) {
+									== SDL_CONTROLLER_BUTTON_A) {
 								players1 = false;
 								gameState = WIN;
 							}
 							if (event.cbutton.button
-								== SDL_CONTROLLER_BUTTON_B) {
+									== SDL_CONTROLLER_BUTTON_B) {
 								players1 = false;
 								gameState = LOSE;
 							}
@@ -782,7 +917,7 @@ int main(int argc, char* argv[]) {
 				}
 
 				//update
-				UpdateBackground();
+				UpdateBackground(deltaTime);
 
 				// Start Drawing
 
@@ -818,7 +953,7 @@ int main(int argc, char* argv[]) {
 
 				// Create deltaTime - for frame rate independence
 				thisTime = SDL_GetTicks();
-				deltaTime = (float)(thisTime - lastTime) / 1000;
+				deltaTime = (float) (thisTime - lastTime) / 1000;
 				lastTime = thisTime;
 
 				//check for input events
@@ -834,12 +969,12 @@ int main(int argc, char* argv[]) {
 					case SDL_CONTROLLERBUTTONDOWN:
 						if (event.cdevice.which == 0) {
 							if (event.cbutton.button
-								== SDL_CONTROLLER_BUTTON_A) {
+									== SDL_CONTROLLER_BUTTON_A) {
 								players2 = false;
 								gameState = WIN;
 							}
 							if (event.cbutton.button
-								== SDL_CONTROLLER_BUTTON_B) {
+									== SDL_CONTROLLER_BUTTON_B) {
 								players2 = false;
 								gameState = LOSE;
 							}
@@ -849,7 +984,7 @@ int main(int argc, char* argv[]) {
 				}
 
 				//update
-				UpdateBackground();
+				UpdateBackground(deltaTime);
 
 				// Start Drawing
 
@@ -863,7 +998,7 @@ int main(int argc, char* argv[]) {
 				SDL_RenderCopy(renderer, bkgd2, NULL, &bkgd2Pos);
 
 				// Draw the players1 image
-				SDL_RenderCopy(renderer, players1N, NULL, &players2NPos);
+				SDL_RenderCopy(renderer, players2N, NULL, &players2NPos);
 
 				// Draw the cursor image
 				SDL_RenderCopy(renderer, cursor, NULL, &cursorPos);
@@ -885,7 +1020,7 @@ int main(int argc, char* argv[]) {
 
 				// Create deltaTime - for frame rate independence
 				thisTime = SDL_GetTicks();
-				deltaTime = (float)(thisTime - lastTime) / 1000;
+				deltaTime = (float) (thisTime - lastTime) / 1000;
 				lastTime = thisTime;
 
 				//check for input events
@@ -901,22 +1036,38 @@ int main(int argc, char* argv[]) {
 					case SDL_CONTROLLERBUTTONDOWN:
 						if (event.cdevice.which == 0) {
 							if (event.cbutton.button
-								== SDL_CONTROLLER_BUTTON_A) {
-								win = false;
-								gameState = MENU;
-							}
-							if (event.cbutton.button
-								== SDL_CONTROLLER_BUTTON_B) {
-								win = false;
-								gameState = PLAYERS1;
+									== SDL_CONTROLLER_BUTTON_A) {
+								//if player chooses main menu game
+								if (menuOver) {
+									win = false;
+									gameState = MENU;
+									menuOver = false;
+
+								}
+								if (playOver) {
+									win = false;
+									gameState = PLAYERS1;
+									playOver = false;
+								}
 							}
 						}
 						break;
+
+					case SDL_CONTROLLERAXISMOTION:
+						moveCursor(event.caxis);
+						break;
+
 					}
 				}
 
 				//update
-				UpdateBackground();
+				UpdateBackground(deltaTime);
+
+				//update cursor
+				UpdateCursor(deltaTime);
+
+				menuOver = SDL_HasIntersection(&activePos, &menuNPos);
+				playOver = SDL_HasIntersection(&activePos, &playNPos);
 
 				// Start Drawing
 
@@ -933,11 +1084,19 @@ int main(int argc, char* argv[]) {
 				SDL_RenderCopy(renderer, winText, NULL, &winTextPos);
 
 				// Draw the play again image
-				SDL_RenderCopy(renderer, playN, NULL, &playNPos);
+				if (playOver) {
+					SDL_RenderCopy(renderer, playO, NULL, &playNPos);
+				} else {
 
+					SDL_RenderCopy(renderer, playN, NULL, &playNPos);
+				}
 				// Draw the menu Graphic
-				SDL_RenderCopy(renderer, menuN, NULL, &menuNPos);
+				if (menuOver) {
+					SDL_RenderCopy(renderer, menuO, NULL, &menuNPos);
+				} else {
 
+					SDL_RenderCopy(renderer, menuN, NULL, &menuNPos);
+				}
 				// Draw the cursor image
 				SDL_RenderCopy(renderer, cursor, NULL, &cursorPos);
 
@@ -958,7 +1117,7 @@ int main(int argc, char* argv[]) {
 
 				// Create deltaTime - for frame rate independence
 				thisTime = SDL_GetTicks();
-				deltaTime = (float)(thisTime - lastTime) / 1000;
+				deltaTime = (float) (thisTime - lastTime) / 1000;
 				lastTime = thisTime;
 
 				//check for input events
@@ -974,22 +1133,37 @@ int main(int argc, char* argv[]) {
 					case SDL_CONTROLLERBUTTONDOWN:
 						if (event.cdevice.which == 0) {
 							if (event.cbutton.button
-								== SDL_CONTROLLER_BUTTON_A) {
-								lose = false;
-								gameState = MENU;
-							}
-							if (event.cbutton.button
-								== SDL_CONTROLLER_BUTTON_B) {
-								lose = false;
-								gameState = PLAYERS1;
+									== SDL_CONTROLLER_BUTTON_A) {
+								//if player chooses main menu game
+								if (menuOver) {
+									lose = false;
+									gameState = MENU;
+									menuOver = false;
+
+								}
+								if (playOver) {
+									lose = false;
+									gameState = PLAYERS1;
+									playOver = false;
+								}
 							}
 						}
+						break;
+
+					case SDL_CONTROLLERAXISMOTION:
+						moveCursor(event.caxis);
 						break;
 					}
 				}
 
 				//update
-				UpdateBackground();
+				UpdateBackground(deltaTime);
+
+				//update cursor
+				UpdateCursor(deltaTime);
+
+				menuOver = SDL_HasIntersection(&activePos, &menuNPos);
+				playOver = SDL_HasIntersection(&activePos, &playNPos);
 
 				// Start Drawing
 
@@ -1002,14 +1176,23 @@ int main(int argc, char* argv[]) {
 				// Draw the Bkgd2 image
 				SDL_RenderCopy(renderer, bkgd2, NULL, &bkgd2Pos);
 
-				// Draw the Wintext image
+				// Draw the lose text image
 				SDL_RenderCopy(renderer, loseText, NULL, &loseTextPos);
 
 				// Draw the play again image
-				SDL_RenderCopy(renderer, playN, NULL, &playNPos);
+				if (playOver) {
+					SDL_RenderCopy(renderer, playO, NULL, &playNPos);
+				} else {
 
+					SDL_RenderCopy(renderer, playN, NULL, &playNPos);
+				}
 				// Draw the menu Graphic
-				SDL_RenderCopy(renderer, menuN, NULL, &menuNPos);
+				if (menuOver) {
+					SDL_RenderCopy(renderer, menuO, NULL, &menuNPos);
+				} else {
+
+					SDL_RenderCopy(renderer, menuN, NULL, &menuNPos);
+				}
 
 				// Draw the cursor image
 				SDL_RenderCopy(renderer, cursor, NULL, &cursorPos);
