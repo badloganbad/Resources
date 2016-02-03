@@ -142,6 +142,9 @@ void UpdateCursor(float deltaTime) {
 bool players1Over = false, players2Over = false, instructionsOver = false,
 		quitOver = false, menuOver = false, playOver = false;
 
+//class header includes
+#include "player.h"
+
 int main(int argc, char* argv[]) {
 
 #if defined(__linux__)
@@ -207,6 +210,11 @@ int main(int argc, char* argv[]) {
 
 	//create the renderer
 	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+
+	//***********************************************CREATE PLAYERS - START*************************
+	Player player1 = Player(renderer, 0, s_cwd_images.c_str(), 250.0, 500.0);
+
+	Player player2 = Player(renderer, 1, s_cwd_images.c_str(), 750.0, 500.0);
 
 	//***** Create Background - START ******
 	string BKGDpath = s_cwd_images + "bkgd.png";
@@ -662,12 +670,6 @@ int main(int argc, char* argv[]) {
 		switch (gameState) {
 		case MENU:
 			menu = true;
-			cout << "The Game State is Menu" << endl;
-			cout << "Press the A Button for Instructions" << endl;
-			cout << "Press the B Button for 1 Player Game" << endl;
-			cout << "Press the X Button for 2 Player Game" << endl;
-			cout << "Press the Y Button for Quit Game" << endl;
-			cout << endl;
 
 			while (menu) {
 				// Create deltaTime - for frame rate independence
@@ -790,9 +792,7 @@ int main(int argc, char* argv[]) {
 
 		case INSTRUCTIONS:
 			instructions = true;
-			cout << "The Game State is Instructions" << endl;
-			cout << "Press the A Button for Main Menu" << endl;
-			cout << endl;
+
 
 			while (instructions) {
 
@@ -877,10 +877,6 @@ int main(int argc, char* argv[]) {
 
 		case PLAYERS1:
 			players1 = true;
-			cout << "The Game State is 1 Player Game" << endl;
-			cout << "Press the A Button for Win Screen" << endl;
-			cout << "Press the B Button for Lose Screen" << endl;
-			cout << endl;
 
 			while (players1) {
 
@@ -902,22 +898,33 @@ int main(int argc, char* argv[]) {
 					case SDL_CONTROLLERBUTTONDOWN:
 						if (event.cdevice.which == 0) {
 							if (event.cbutton.button
-									== SDL_CONTROLLER_BUTTON_A) {
+									== SDL_CONTROLLER_BUTTON_X) {
 								players1 = false;
 								gameState = WIN;
 							}
 							if (event.cbutton.button
-									== SDL_CONTROLLER_BUTTON_B) {
+									== SDL_CONTROLLER_BUTTON_Y) {
 								players1 = false;
 								gameState = LOSE;
 							}
+							//send button press info to player1
+							player1.OnControllerButton(event.cbutton);
+
 						}
+						break;
+
+					case SDL_CONTROLLERAXISMOTION:
+
+						player1.OnControllerAxis(event.caxis);
 						break;
 					}
 				}
 
 				//update
 				UpdateBackground(deltaTime);
+
+				//update player1
+				player1.Update(deltaTime);
 
 				// Start Drawing
 
@@ -930,11 +937,8 @@ int main(int argc, char* argv[]) {
 				// Draw the Bkgd2 image
 				SDL_RenderCopy(renderer, bkgd2, NULL, &bkgd2Pos);
 
-				// Draw the players2 image
-				SDL_RenderCopy(renderer, players1N, NULL, &players1NPos);
-
-				// Draw the cursor image
-				SDL_RenderCopy(renderer, cursor, NULL, &cursorPos);
+				//draw the player
+				player1.Draw(renderer);
 
 				// SDL Render present - draw new, updated screen
 				SDL_RenderPresent(renderer);
@@ -944,10 +948,6 @@ int main(int argc, char* argv[]) {
 
 		case PLAYERS2:
 			players2 = true;
-			cout << "The Game State is 2 Player Game" << endl;
-			cout << "Press the A Button for Win Screen" << endl;
-			cout << "Press the B Button for Lose Screen" << endl;
-			cout << endl;
 
 			while (players2) {
 
@@ -969,16 +969,23 @@ int main(int argc, char* argv[]) {
 					case SDL_CONTROLLERBUTTONDOWN:
 						if (event.cdevice.which == 0) {
 							if (event.cbutton.button
-									== SDL_CONTROLLER_BUTTON_A) {
+									== SDL_CONTROLLER_BUTTON_X) {
 								players2 = false;
 								gameState = WIN;
 							}
 							if (event.cbutton.button
-									== SDL_CONTROLLER_BUTTON_B) {
+									== SDL_CONTROLLER_BUTTON_Y) {
 								players2 = false;
 								gameState = LOSE;
 							}
 						}
+
+						//send button press info to player 1
+						player1.OnControllerButton(event.cbutton);
+
+						//send button press info player 2
+						player2.OnControllerButton(event.cbutton);
+
 						break;
 					}
 				}
@@ -1011,10 +1018,7 @@ int main(int argc, char* argv[]) {
 
 		case WIN:
 			win = true;
-			cout << "The Game State is Win" << endl;
-			cout << "Press the A Button for Main Menu Screen" << endl;
-			cout << "Press the B Button for Replay Game" << endl;
-			cout << endl;
+
 
 			while (win) {
 
@@ -1108,10 +1112,7 @@ int main(int argc, char* argv[]) {
 
 		case LOSE:
 			lose = true;
-			cout << "The Game State is Lose" << endl;
-			cout << "Press the A Button for Main Menu Screen" << endl;
-			cout << "Press the B Button for Replay Game" << endl;
-			cout << endl;
+
 
 			while (lose) {
 
