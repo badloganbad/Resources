@@ -1,5 +1,5 @@
 //needed includes for cross platform development
-#if defined(_WIND32) || (_WIN64)
+#if defined(_WIN32) || (_WIN64)
 #include "SDL.h"
 #include "SDL_image.h"
 #endif
@@ -9,7 +9,7 @@
 #include "SDL2_image/SDL_image.h"
 #endif
 
-#if defined (__linus__)
+#if defined (__linux__)
 #include "SDL2/SDL.h"
 #include "SDL2/SDL_image.h"
 #endif
@@ -19,9 +19,16 @@
 #include <iostream>
 using namespace std;
 
+//bullet includes
+#include <vector>
+#include "bullet.h"
+
 class Player {
 
 public:
+
+	//variable to hold the list of bullets
+	vector<Bullet> bulletList;
 
 	//string to hold the path to the player's texture
 	string playerPath;
@@ -65,4 +72,8 @@ public:
 
 	//Player's destruction method
 	~Player();
+
+private:
+
+	void CreateBullet();
 };

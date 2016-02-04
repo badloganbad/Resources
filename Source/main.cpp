@@ -642,14 +642,27 @@ int main(int argc, char* argv[]) {
 
 	//************* Create Cursor - END ******************
 
-	//****** Set up a Game Controller Variable *****
-	SDL_GameController* gGameController = NULL;
-
-	//***** Open Game Controller ******
-	gGameController = SDL_GameControllerOpen(0);
-
 	//***** Turn on Game Controller Events *****
 	SDL_GameControllerEventState(SDL_ENABLE);
+
+	//****** Set up a Game Controller Variable ***** - player 1
+	SDL_GameController* gGameController0 = NULL;
+
+	//***** Open Game Controller ******
+	gGameController0 = SDL_GameControllerOpen(0);
+
+	//****** Set up a Game Controller Variable ***** - player 2
+	SDL_GameController* gGameController1 = NULL;
+
+	//***** Open Game Controller ******
+	gGameController1 = SDL_GameControllerOpen(1);
+
+	
+
+
+
+
+
 
 	//***** SDL Event to handle event input *****
 	SDL_Event event;
@@ -967,7 +980,7 @@ int main(int argc, char* argv[]) {
 
 					switch (event.type) {
 					case SDL_CONTROLLERBUTTONDOWN:
-						if (event.cdevice.which == 0) {
+						if (event.cdevice.which == 0 || event.cdevice.which == 1) {
 							if (event.cbutton.button
 									== SDL_CONTROLLER_BUTTON_X) {
 								players2 = false;
@@ -987,11 +1000,28 @@ int main(int argc, char* argv[]) {
 						player2.OnControllerButton(event.cbutton);
 
 						break;
+						
+					case SDL_CONTROLLERAXISMOTION:
+						// send axis info to player 1
+						player1.OnControllerAxis(event.caxis);
+
+						//send axis info to player 2
+						player2.OnControllerAxis(event.caxis);
+						break;
+
 					}
 				}
 
 				//update
 				UpdateBackground(deltaTime);
+
+				//Update player1
+				player1.Update(deltaTime);
+
+				//Update player2
+				player2.Update(deltaTime);
+
+				//
 
 				// Start Drawing
 
@@ -1004,11 +1034,17 @@ int main(int argc, char* argv[]) {
 				// Draw the Bkgd2 image
 				SDL_RenderCopy(renderer, bkgd2, NULL, &bkgd2Pos);
 
-				// Draw the players1 image
-				SDL_RenderCopy(renderer, players2N, NULL, &players2NPos);
+				// Draw Player 1
+				player1.Draw(renderer);
+
+				// Draw Player 2
+				player2.Draw(renderer);
+
+				// Draw the players2 image
+				//SDL_RenderCopy(renderer, players2N, NULL, &players2NPos);
 
 				// Draw the cursor image
-				SDL_RenderCopy(renderer, cursor, NULL, &cursorPos);
+				//SDL_RenderCopy(renderer, cursor, NULL, &cursorPos);
 
 				// SDL Render present - draw new, updated screen
 				SDL_RenderPresent(renderer);
