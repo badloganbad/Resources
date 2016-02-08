@@ -34,7 +34,7 @@ Bullet::Bullet(SDL_Renderer *renderer, string filePath, float x, float y)
 	pos_X = x;
 	pos_Y = y;
 
-	//intialize the direction vars for the bullet
+	//initialize the direction vars for the bullet
 	//no X movement, only Y movement (up)
 	xDir = 0;
 	yDir = -1;

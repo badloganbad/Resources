@@ -2,17 +2,20 @@
 #include "SDL.h"
 #include "SDL_image.h"
 #include <direct.h>
+#include "SDL_mixer.h"
 #define getcwd _getcwd
 #endif
 
 #if defined(__APPLE__)
 #include "SDL2/SDL.h"
 #include "SDL2_image/SDL_image.h"
+#include "SDL2_mixer/SDL_mixer.h"
 #endif
 
 #if defined(__linux__)
 #include "SDL2/SDL.h"
 #include "SDL2/SDL_image.h"
+#include "SDL2/SDL_mixer.h"
 #include <unistd.h>
 #endif
 
@@ -157,8 +160,9 @@ int main(int argc, char* argv[]) {
 	// create a sting linking to the mac's images folder
 	string s_cwd_images = s_cwd + "/Resources/Images/";
 
-	//test
-	cout << s_cwd_images << endl;
+	// create a sting linking to the mac's audio folder
+	string s_cwd_audio = s_cwd + "/Resources/Audio/";
+
 #endif
 
 #if defined(__APPLE__)
@@ -169,8 +173,8 @@ int main(int argc, char* argv[]) {
 	// create a sting linking to the mac's images folder
 	string s_cwd_images = s_cwd + "/Resources/Images/";
 
-	//test
-	cout << s_cwd_images << endl;
+	//create a string link to the audio folder on __APPLE__
+	string audio_dir = s_cwd + "/Resources/Audio/";
 #endif
 
 #if defined(_WIN32) || (_WIN64)
@@ -180,8 +184,11 @@ int main(int argc, char* argv[]) {
 	//get the current working directory
 	string s_cwd(getcwd(NULL, 0));
 
-	// create a sting linking to the mac's images folder
+	// create a string linking to the images folder
 	string s_cwd_images = s_cwd + "\\Resources\\Images\\";
+
+	// create a string linking to the audio folder
+	string s_cwd_audio = s_cwd + "\\Resources\\Audio\\";
 
 #endif
 
@@ -657,7 +664,27 @@ int main(int argc, char* argv[]) {
 	//***** Open Game Controller ******
 	gGameController1 = SDL_GameControllerOpen(1);
 
+	//*********************************************************AUDIO*************************
+	//open Audio Channel
+	Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048);
+
+	//Load a MUSIC file
+	Mix_Music *bgm = Mix_LoadMUS((audio_dir + "background.mp3").c_str());
+
+	// If the MUSIC file is not playing - play it.
+	if(!Mix_PlayingMusic())
+		Mix_PlayMusic(bgm, -1); // -1 means loop forever
 	
+	// Set up a Sound Effect CHUNK for the button over state
+	Mix_Chunk *overSound = Mix_LoadWAV((audio_dir + "over.wav").c_str());
+
+	// Set up a Sound Effect CHUNK for the button pressed state
+	Mix_Chunk *pressedSound = Mix_LoadWAV((audio_dir + "pressed.wav").c_str());
+
+	//bool value to control the over sound effect and the buttons
+	bool alreadyOver = false;
+
+
 
 
 
@@ -750,6 +777,16 @@ int main(int argc, char* argv[]) {
 				instructionsOver = SDL_HasIntersection(&activePos,
 						&instructNPos);
 				quitOver = SDL_HasIntersection(&activePos, &quitNPos);
+
+				// *************************new audio
+
+				//if the cursor is over a button, play the over sound
+				if(players1Over | players2Over || instructionsOver | quitOver){
+					if(alreadyOver == false){
+						Mix_PlayChannel(-1, overSound, 0);
+						alreadyOver = true;
+					}
+				}
 
 				// Start Drawing
 
