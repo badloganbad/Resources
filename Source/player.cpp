@@ -4,13 +4,41 @@
 const int JOYSTICK_DEAD_ZONE = 8000;
 
 //player creation method
-Player::Player(SDL_Renderer *renderer, int pNum, string filePath, float x,
+Player::Player(SDL_Renderer *renderer, int pNum, string filePath, string audioPath, float x,
 		float y) {
 	//set the player number 0 or 1
 	playerNum = pNum;
 
 	//set float for player speed
 	speed = 500.0f;
+
+	laser = Mix_LoadWAV((audioPath + "laser.wav").c_str());
+
+	//init score and lives vars
+	oldScore = 0;
+	playerScore = 0;
+	oldLives = 0;
+	playerLives = 3;
+
+	//init the font system
+	TTF_Init();
+
+	//load the font
+	font = TTF_OpenFont((audioPath + "SPACEMAN.TTF").c_str(), 40);
+
+	//see if this is player 1, or player 2, and create the correct X and Y locations
+	if(playerNum == 0){
+		//Create the score texture X and Y position
+		scorePos.x = scorePos.y = 10;
+		livesPos.x = 10;
+		livesPos.y = 40;
+	} else {
+		//Create the score texture X and Y position
+		scorePos.x = 650;
+		scorePos.y = 10;
+		livesPos.x = 650;
+		livesPos.y = 40;
+	}
 
 	//see if this is player 1 or player 2, and create the correct file path
 	if (playerNum == 0) {
@@ -84,6 +112,9 @@ void Player::CreateBullet()
 		//see if the bullet is not active
 		if (bulletList[i].active == false)
 		{
+			//Play the Over Sound - plays fine through levels, must pause for QUIT
+			Mix_PlayChannel(-1, laser, 0);
+
 			//set bullet to active
 			bulletList[i].active = true;
 

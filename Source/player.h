@@ -2,21 +2,28 @@
 #if defined(_WIN32) || (_WIN64)
 #include "SDL.h"
 #include "SDL_image.h"
+#include "SDL_mixer.h"
+#include "SDL_ttf.h"
 #endif
 
 #if defined(__APPLE__)
 #include "SDL2/SDL.h"
 #include "SDL2_image/SDL_image.h"
+#include "SDL2_mixer/SDL_mixer.h"
+#include "SDL2_ttf/SDL_ttf.h"
 #endif
 
 #if defined (__linux__)
 #include "SDL2/SDL.h"
 #include "SDL2/SDL_image.h"
+#include "SDL2/SDL_mixer.h"
+#include "SDL2/SDL_ttf.h"
 #endif
 
 // needed includes
 #include <string>
 #include <iostream>
+#include <sstream>
 using namespace std;
 
 //bullet includes
@@ -26,6 +33,35 @@ using namespace std;
 class Player {
 
 public:
+
+	//player score and lives vars
+	int playerScore, oldScore, playerLives, oldLives;
+
+	//variable for what font to se
+	TTF_Font *font;
+
+	//font color var
+	SDL_Color colorP1 = {0, 255, 0, 255};
+
+	//font color var
+	SDL_Color colorP2 = {0,0, 255, 255};
+
+	//surface for the player score and player lives
+	SDL_Surface *scoreSurface, *livesSurface;
+
+	//Textures for the player score and player lives
+	SDL_Texture *scoreTexture, *livesTexture;
+
+	//SDL_Rect for the player score and lives textures
+	SDL_Rect scorePos, livesPos;
+
+	//strings o hold the temp values of player lives and player score
+	string tempScore, tempLives;
+
+
+
+	//audio sound effect - CHUNK
+	Mix_Chunk *laser;
 
 	//variable to hold the list of bullets
 	vector<Bullet> bulletList;
@@ -56,7 +92,7 @@ public:
 
 	//Player's Creation method using passed in values for renderer, player number, path to the texture
 	//starting position X starting position Y
-	Player(SDL_Renderer *renderer, int pNum, string filePath, float x, float y);
+	Player(SDL_Renderer *renderer, int pNum, string filePath, string audioPath, float x, float y);
 
 	//method to  allow the player to move via joystick axis
 	void OnControllerAxis(const SDL_ControllerAxisEvent event);
