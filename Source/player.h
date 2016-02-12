@@ -41,10 +41,10 @@ public:
 	TTF_Font *font;
 
 	//font color var
-	SDL_Color colorP1 = {0, 255, 0, 255};
+	SDL_Color colorP1 = {255, 0, 0, 255};
 
 	//font color var
-	SDL_Color colorP2 = {0,0, 255, 255};
+	SDL_Color colorP2 = {0,255, 0, 255};
 
 	//surface for the player score and player lives
 	SDL_Surface *scoreSurface, *livesSurface;
@@ -101,13 +101,19 @@ public:
 	void OnControllerButton(const SDL_ControllerButtonEvent event);
 
 	//update the player using the passed in deltaTime
-	void Update(float deltaTime);
+	void Update(float deltaTime, SDL_Renderer *renderer);
 
 	//draw the player main's passed in renderer
 	void Draw(SDL_Renderer *renderer);
 
 	//Player's destruction method
 	~Player();
+
+	//update score method
+	void UpdateScore(SDL_Renderer *renderer);
+
+	//update score method
+	void UpdateLives(SDL_Renderer *renderer);
 
 private:
 

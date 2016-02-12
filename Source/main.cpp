@@ -147,8 +147,20 @@ bool players1Over = false, players2Over = false, instructionsOver = false,
 
 //class header includes
 #include "player.h"
+#include "enemy.h"
+#include <vector>
+#include <stdlib.h>
+#include <time.h>
+
+//variable to hold the list of enemies: for 1 player game - 6 total, for 2 player game: 12 total
+vector<Enemy> enemyList;
+
 
 int main(int argc, char* argv[]) {
+
+	//initialize random seed:
+	srand (time(NULL));
+
 
 #if defined(__linux__)
 	cout << "Running on Linux" << endl;
@@ -958,7 +970,21 @@ int main(int argc, char* argv[]) {
 			break; //end instructions case
 
 		case PLAYERS1:
+
+			enemyList.clear();
+
 			players1 = true;
+
+			//create the enemy pool - 6
+			for (int i = 0; i < 6; i++){
+
+				//create the enemy
+				Enemy tmpEnemy(renderer, s_cwd_images);
+
+				//add to enemylist
+				enemyList.push_back(tmpEnemy);
+
+			}
 
 			while (players1) {
 
@@ -1006,7 +1032,14 @@ int main(int argc, char* argv[]) {
 				UpdateBackground(deltaTime);
 
 				//update player1
-				player1.Update(deltaTime);
+				player1.Update(deltaTime, renderer);
+
+				//Update the enemies
+				for (int i = 0; i < enemyList.size(); i++){
+
+					//update enemy
+					enemyList[i].Update(deltaTime);
+				}
 
 				// Start Drawing
 
@@ -1018,6 +1051,13 @@ int main(int argc, char* argv[]) {
 
 				// Draw the Bkgd2 image
 				SDL_RenderCopy(renderer, bkgd2, NULL, &bkgd2Pos);
+
+				//Update the enemies
+				for (int i = 0; i < enemyList.size(); i++) {
+
+					//update enemy
+					enemyList[i].Draw(renderer);
+				}
 
 				//draw the player
 				player1.Draw(renderer);
@@ -1086,10 +1126,10 @@ int main(int argc, char* argv[]) {
 				UpdateBackground(deltaTime);
 
 				//Update player1
-				player1.Update(deltaTime);
+				player1.Update(deltaTime, renderer);
 
 				//Update player2
-				player2.Update(deltaTime);
+				player2.Update(deltaTime, renderer);
 
 				//
 
