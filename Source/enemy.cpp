@@ -74,7 +74,8 @@ void Enemy::Update(float deltaTime){ // float delta
 		Reset();
 	}
 
-	///Update angleangle += .1;
+	///Update angle
+	angle += .1;
 }
 
 //Enemy draw method

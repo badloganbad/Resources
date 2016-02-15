@@ -6,6 +6,10 @@ const int JOYSTICK_DEAD_ZONE = 8000;
 //player creation method
 Player::Player(SDL_Renderer *renderer, int pNum, string filePath,
 		string audioPath, float x, float y) {
+
+	//activate the player
+	active = true;
+
 	//set the player number 0 or 1
 	playerNum = pNum;
 
@@ -106,6 +110,32 @@ Player::Player(SDL_Renderer *renderer, int pNum, string filePath,
 
 }
 
+//reset the player method
+void Player::Reset()
+{
+	//place the player based on player number
+	if (playerNum == 0)
+	{
+		//set the x and y for player 1
+		posRect.x = 250.0;
+		posRect.y = 500.0;
+	}
+	else
+	{
+		//set the x and y for player 2
+		posRect.x = 550.0;
+		posRect.y = 500.0;
+	}
+
+	pos_X = posRect.x;
+	pos_Y = posRect.y;
+	playerLives = 3;
+	playerScore = 0;
+	xDir = 0;
+	yDir = 0;
+	active = true;
+}
+
 //update score
 void Player::UpdateLives(SDL_Renderer *renderer) {
 
@@ -137,6 +167,19 @@ void Player::UpdateLives(SDL_Renderer *renderer) {
 
 	//set old score
 	oldLives = playerLives;
+
+	//if player has no more lives
+	if (playerLives <= 0)
+	{
+		//deactivate the player
+		active = false;
+
+		//move the
+		posRect.x = posRect.y = -2000;
+
+		//set float values to location values
+		pos_X = pos_Y = -2000;
+	}
 
 }
 
@@ -213,12 +256,6 @@ void Player::OnControllerButton(const SDL_ControllerButtonEvent event) {
 		if (event.button == 0) {
 			//cout << "Player 1 - Button A" << endl;
 
-			//test - change scores
-			playerScore += 10;
-
-			//test - change lives
-			playerLives -= 1;
-
 			//create a bullet
 			CreateBullet();
 		}
@@ -229,12 +266,6 @@ void Player::OnControllerButton(const SDL_ControllerButtonEvent event) {
 		//if A button
 		if (event.button == 0) {
 			//cout << "Player 2 - Button A" << endl;
-
-			//test - change scores
-			playerScore += 10;
-
-			//test - change lives
-			playerLives -= 1;
 
 			//create a bullet
 			CreateBullet();

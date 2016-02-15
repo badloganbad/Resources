@@ -151,15 +151,40 @@ bool players1Over = false, players2Over = false, instructionsOver = false,
 #include <vector>
 #include <stdlib.h>
 #include <time.h>
+#include "explode.h"
 
 //variable to hold the list of enemies: for 1 player game - 6 total, for 2 player game: 12 total
 vector<Enemy> enemyList;
+
+vector<Explode> explodeList;
+
+void MakeExplosion(int x, int y)
+{
+	//see if there is a explosino not active to use
+	for (int i = 0; i < explodeList.size(); i++)
+	{
+		//see if the bullet is not active
+		if (explodeList[i].active == false)
+		{
+			//set explosion to active
+			explodeList[i].active = true;
+
+			//use some math in the x position to get the bullet close to
+			// the center of the player using player width
+			explodeList[i].posRect.x = x;
+			explodeList[i].posRect.y = y;
+
+			//once explosion is found, break out of loop
+			break;
+		}
+	}
+}
 
 
 int main(int argc, char* argv[]) {
 
 	//initialize random seed:
-	srand (time(NULL));
+	srand(time(NULL));
 
 
 #if defined(__linux__)
@@ -173,7 +198,7 @@ int main(int argc, char* argv[]) {
 	string s_cwd_images = s_cwd + "/Resources/Images/";
 
 	// create a sting linking to the mac's audio folder
-	string s_cwd_audio = s_cwd + "/Resources/Audio/";
+	string audio_dir = s_cwd + "/Resources/Audio/";
 
 #endif
 
@@ -200,7 +225,7 @@ int main(int argc, char* argv[]) {
 	string s_cwd_images = s_cwd + "\\Resources\\Images\\";
 
 	// create a string linking to the audio folder
-	string s_cwd_audio = s_cwd + "\\Resources\\Audio\\";
+	string audio_dir = s_cwd + "\\Resources\\Audio\\";
 
 #endif
 
@@ -210,12 +235,12 @@ int main(int argc, char* argv[]) {
 
 	// Create an application window with the following settings:
 	window = SDL_CreateWindow("An SDL2 window",                  // window title
-			SDL_WINDOWPOS_UNDEFINED,           // initial x position
-			SDL_WINDOWPOS_UNDEFINED,           // initial y position
-			1024,                               // width, in pixels
-			768,                               // height, in pixels
-			SDL_WINDOW_OPENGL                  // flags - see below
-			);
+		SDL_WINDOWPOS_UNDEFINED,           // initial x position
+		SDL_WINDOWPOS_UNDEFINED,           // initial y position
+		1024,                               // width, in pixels
+		768,                               // height, in pixels
+		SDL_WINDOW_OPENGL                  // flags - see below
+		);
 
 	// Check that the window was successfully created
 	if (window == NULL) {
@@ -691,12 +716,26 @@ int main(int argc, char* argv[]) {
 	// Set up a Sound Effect CHUNK for the button pressed state
 	Mix_Chunk *pressedSound = Mix_LoadWAV((audio_dir + "pressed.wav").c_str());
 
+	// Set up a Sound Effect CHUNK for the button pressed state
+	Mix_Chunk *explosionSound = Mix_LoadWAV((audio_dir + "enemy.wav").c_str());
+
 	//bool value to control the over sound effect and the buttons
 	bool alreadyOver = false;
 
 	//***********************************************CREATE PLAYERS - START*************************
-		Player player1 = Player(renderer, 0, s_cwd_images.c_str(), audio_dir.c_str(), 250.0, 500.0);
-		Player player2 = Player(renderer, 1, s_cwd_images.c_str(), audio_dir.c_str(), 750.0, 500.0);
+	Player player1 = Player(renderer, 0, s_cwd_images.c_str(), audio_dir.c_str(), 250.0, 500.0);
+	Player player2 = Player(renderer, 1, s_cwd_images.c_str(), audio_dir.c_str(), 750.0, 500.0);
+
+	//create a pool of explosions - 20
+	for (int i = 0; i < 20; i++)
+	{
+		//create the explosion
+		Explode tmpExplode(renderer, s_cwd_images, -1000, -1000);
+
+		//add to explodeList
+		explodeList.push_back(tmpExplode);
+	}
+
 
 
 
@@ -973,6 +1012,9 @@ int main(int argc, char* argv[]) {
 
 			enemyList.clear();
 
+			//reset the player
+			player1.Reset();
+
 			players1 = true;
 
 			//create the enemy pool - 6
@@ -990,7 +1032,7 @@ int main(int argc, char* argv[]) {
 
 				// Create deltaTime - for frame rate independence
 				thisTime = SDL_GetTicks();
-				deltaTime = (float) (thisTime - lastTime) / 1000;
+				deltaTime = (float)(thisTime - lastTime) / 1000;
 				lastTime = thisTime;
 
 				//check for input events
@@ -1006,24 +1048,26 @@ int main(int argc, char* argv[]) {
 					case SDL_CONTROLLERBUTTONDOWN:
 						if (event.cdevice.which == 0) {
 							if (event.cbutton.button
-									== SDL_CONTROLLER_BUTTON_X) {
+								== SDL_CONTROLLER_BUTTON_X) {
 								players1 = false;
 								gameState = WIN;
 							}
 							if (event.cbutton.button
-									== SDL_CONTROLLER_BUTTON_Y) {
+								== SDL_CONTROLLER_BUTTON_Y) {
 								players1 = false;
 								gameState = LOSE;
 							}
 							//send button press info to player1
-							player1.OnControllerButton(event.cbutton);
+							if (player1.active)
+								player1.OnControllerButton(event.cbutton);
 
 						}
 						break;
 
 					case SDL_CONTROLLERAXISMOTION:
 
-						player1.OnControllerAxis(event.caxis);
+						if (player1.active)
+							player1.OnControllerAxis(event.caxis);
 						break;
 					}
 				}
@@ -1032,14 +1076,98 @@ int main(int argc, char* argv[]) {
 				UpdateBackground(deltaTime);
 
 				//update player1
-				player1.Update(deltaTime, renderer);
+				if (player1.active)
+					player1.Update(deltaTime, renderer);
 
 				//Update the enemies
-				for (int i = 0; i < enemyList.size(); i++){
+				for (int i = 0; i < enemyList.size(); i++) {
 
 					//update enemy
 					enemyList[i].Update(deltaTime);
 				}
+
+				//only check if the player is active
+				if (player1.active == true)
+				{
+
+					//use the player 1 bullet list to see if the active bullets
+					//hit any of the enemies
+					for (int i = 0; i < player1.bulletList.size(); i++)
+					{
+						//check to see if this bullet is active (onscreen)
+						if (player1.bulletList[i].active == true)
+						{
+							//check all enemies against the active bullet
+							for (int j = 0; j < enemyList.size(); j++)
+							{
+								//if there is a collision between the two objects
+								if (SDL_HasIntersection(&player1.bulletList[i].posRect, &enemyList[j].posRect))
+								{
+									//play explosion sound
+									Mix_PlayChannel(-1, explosionSound, 0);
+
+									MakeExplosion(enemyList[j].posRect.x, enemyList[j].posRect.y);
+
+									//reset the enemy
+									enemyList[j].Reset();
+
+									//reset the player bullet
+									player1.bulletList[i].Reset();
+
+									//give the player som epoints
+									player1.playerScore += 50;
+
+									//check to see if there is a winning condition
+									if (player1.playerScore >= 1000)
+									{
+										//go to win
+										players1 = false;
+										gameState = WIN;
+									}
+								}
+							}
+						}
+					}
+					//check to see if the enemies hit the player
+					for (int j = 0; j < enemyList.size(); j++)
+					{
+						//if there is a collision between the two objects
+						if (SDL_HasIntersection(&player1.posRect, &enemyList[j].posRect))
+						{
+							//player Explosion sound
+							Mix_PlayChannel(-1, explosionSound, 0);
+
+							MakeExplosion(enemyList[j].posRect.x-32, enemyList[j].posRect.y-32);
+
+							//reset the enemy
+							enemyList[j].Reset();
+
+							//take 1 away from player's lives
+							player1.playerLives -= 1;
+
+							//if game over - player lives <=0
+							if (player1.playerLives <= 0)
+							{
+								players1 = false;
+								gameState = LOSE;
+								break;
+							}
+						}
+					}
+				}
+				//player 1 active check ends
+
+				//update the pool of explosions - 20
+				for (int i = 0; i < explodeList.size(); i++)
+				{
+					//check to see if active
+					if (explodeList[i].active == true)
+					{
+						//draw explode
+						explodeList[i].Update(deltaTime);
+					}
+				}
+			
 
 				// Start Drawing
 
@@ -1062,6 +1190,17 @@ int main(int argc, char* argv[]) {
 				//draw the player
 				player1.Draw(renderer);
 
+				//draw the pool of explosions - 20
+				for (int i = 0; i < explodeList.size(); i++)
+				{
+					//check to see if active
+					if (explodeList[i].active == true)
+					{
+						//draw explode
+						explodeList[i].Draw(renderer);
+					}
+				}
+
 				// SDL Render present - draw new, updated screen
 				SDL_RenderPresent(renderer);
 
@@ -1069,7 +1208,25 @@ int main(int argc, char* argv[]) {
 			break; //end players1 case
 
 		case PLAYERS2:
+
+			//clear out any olde enemies
+			enemyList.clear();
+
+			//reset player1 and player2
+			player1.Reset();
+			player2.Reset();
+
 			players2 = true;
+			
+			//Create the enemy pool - 12
+			for (int i = 0; i < 12; i++)
+			{
+				//create the enemy
+				Enemy tmpEnemy(renderer, s_cwd_images);
+
+				//add to enemylist
+				enemyList.push_back(tmpEnemy);
+			}
 
 			while (players2) {
 
@@ -1102,21 +1259,24 @@ int main(int argc, char* argv[]) {
 								gameState = LOSE;
 							}
 						}
-
 						//send button press info to player 1
-						player1.OnControllerButton(event.cbutton);
+						if(player1.active)
+							player1.OnControllerButton(event.cbutton);
 
 						//send button press info player 2
-						player2.OnControllerButton(event.cbutton);
+						if(player2.active)
+							player2.OnControllerButton(event.cbutton);
 
 						break;
 
 					case SDL_CONTROLLERAXISMOTION:
 						// send axis info to player 1
-						player1.OnControllerAxis(event.caxis);
+						if(player1.active)
+							player1.OnControllerAxis(event.caxis);
 
 						//send axis info to player 2
-						player2.OnControllerAxis(event.caxis);
+						if(player2.active)
+							player2.OnControllerAxis(event.caxis);
 						break;
 
 					}
@@ -1126,12 +1286,169 @@ int main(int argc, char* argv[]) {
 				UpdateBackground(deltaTime);
 
 				//Update player1
-				player1.Update(deltaTime, renderer);
+				if(player1.active)
+					player1.Update(deltaTime, renderer);
 
 				//Update player2
-				player2.Update(deltaTime, renderer);
+				if(player2.active)
+					player2.Update(deltaTime, renderer);
 
-				//
+				//Update the enemies
+				for (int i = 0; i < enemyList.size(); i++)
+				{
+					//update enemy
+					enemyList[i].Update(deltaTime);
+				}
+
+				//only check if the player is active
+				if (player1.active == true)
+				{
+
+					//use the player 1 bullet list to see if the active bullets
+					//hit any of the enemies
+					for (int i = 0; i < player1.bulletList.size(); i++)
+					{
+						//check to see if this bullet is active (onscreen)
+						if (player1.bulletList[i].active == true)
+						{
+							//check all enemies against the active bullet
+							for (int j = 0; j < enemyList.size(); j++)
+							{
+								//if there is a collision between the two objects
+								if (SDL_HasIntersection(&player1.bulletList[i].posRect, &enemyList[j].posRect))
+								{
+									//play explosion sound
+									Mix_PlayChannel(-1, explosionSound, 0);
+
+									MakeExplosion(enemyList[j].posRect.x, enemyList[j].posRect.y);
+
+									//reset the enemy
+									enemyList[j].Reset();
+
+									//reset the player bullet
+									player1.bulletList[i].Reset();
+
+									//give the player som epoints
+									player1.playerScore += 50;
+									if (player1.playerScore >= 1000)
+									{
+										//go to win
+										players2 = false;
+										gameState = WIN;
+									}
+								}
+							}
+						}
+					}
+					//check to see if the enemies hit the player
+					for (int i = 0; i < enemyList.size(); i++)
+					{
+						//if there is a collision between the two objects
+						if (SDL_HasIntersection(&player1.posRect, &enemyList[i].posRect))
+						{
+							//player Explosion sound
+							Mix_PlayChannel(-1, explosionSound, 0);
+
+							MakeExplosion(player1.posRect.x-32, player1.posRect.y-32);
+
+							//reset the enemy
+							enemyList[i].Reset();
+
+							//take 1 away from player's lives
+							player1.playerLives -= 1;
+
+							//if game over - player lives <=0
+							if (player1.playerLives <= 0 && player2.playerLives <= 0)
+							{
+								players2 = false;
+								gameState = LOSE;
+								break;
+							}
+						}
+					}
+				}
+
+				//player 2 active check ends
+				//only check if the player is active
+				if (player2.active == true)
+				{
+
+					//use the player 1 bullet list to see if the active bullets
+					//hit any of the enemies
+					for (int i = 0; i < player2.bulletList.size(); i++)
+					{
+						//check to see if this bullet is active (onscreen)
+						if (player2.bulletList[i].active == true)
+						{
+							//check all enemies against the active bullet
+							for (int j = 0; j < enemyList.size(); j++)
+							{
+								//if there is a collision between the two objects
+								if (SDL_HasIntersection(&player2.bulletList[i].posRect, &enemyList[j].posRect))
+								{
+									//play explosion sound
+									Mix_PlayChannel(-1, explosionSound, 0);
+
+									MakeExplosion(enemyList[j].posRect.x, enemyList[j].posRect.y);
+
+									//reset the enemy
+									enemyList[j].Reset();
+
+									//reset the player bullet
+									player2.bulletList[i].Reset();
+
+									//give the player som epoints
+									player2.playerScore += 50;
+
+									if (player2.playerScore >= 1000)
+									{
+										//go to win
+										players2 = false;
+										gameState = WIN;
+									}
+								}
+							}
+						}
+					}
+					//check to see if the enemies hit the player
+					for (int i = 0; i < enemyList.size(); i++)
+					{
+						//if there is a collision between the two objects
+						if (SDL_HasIntersection(&player2.posRect, &enemyList[i].posRect))
+						{
+							//player Explosion sound
+							Mix_PlayChannel(-1, explosionSound, 0);
+
+							MakeExplosion(player2.posRect.x-32, player2.posRect.y-32);
+
+							//reset the enemy
+							enemyList[i].Reset();
+
+							//take 1 away from player's lives
+							player2.playerLives -= 1;
+
+							//if game over - player lives <=0
+							if (player1.playerLives <= 0 && player2.playerLives <= 0)
+							{
+								players2 = false;
+								gameState = LOSE;
+								break;
+							}
+						}
+					}
+				}
+				//player 2 active check ends
+
+				//update the pool of explosions - 20
+				for (int i = 0; i < explodeList.size(); i++)
+				{
+					//check to see if active
+					if (explodeList[i].active == true)
+					{
+						//draw explode
+						explodeList[i].Update(deltaTime);
+					}
+				}
 
 				// Start Drawing
 
@@ -1144,11 +1461,29 @@ int main(int argc, char* argv[]) {
 				// Draw the Bkgd2 image
 				SDL_RenderCopy(renderer, bkgd2, NULL, &bkgd2Pos);
 
+				//Draw the enemies
+				for (int i = 0; i < enemyList.size(); i++)
+				{
+					//draw enemy
+					enemyList[i].Draw(renderer);
+				}
+
 				// Draw Player 1
 				player1.Draw(renderer);
 
 				// Draw Player 2
 				player2.Draw(renderer);
+
+				//draw the pool of explosions - 20
+				for (int i = 0; i < explodeList.size(); i++)
+				{
+					//check to see if active
+					if (explodeList[i].active == true)
+					{
+						//draw explode
+						explodeList[i].Draw(renderer);
+					}
+				}
 
 				// Draw the players2 image
 				//SDL_RenderCopy(renderer, players2N, NULL, &players2NPos);

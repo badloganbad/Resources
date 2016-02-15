@@ -34,6 +34,9 @@ class Player {
 
 public:
 
+	//is the player active - still alive?
+	bool active;
+
 	//player score and lives vars
 	int playerScore, oldScore, playerLives, oldLives;
 
@@ -44,7 +47,7 @@ public:
 	SDL_Color colorP1 = {255, 0, 0, 255};
 
 	//font color var
-	SDL_Color colorP2 = {0,255, 0, 255};
+	SDL_Color colorP2 = {0, 255, 0, 255};
 
 	//surface for the player score and player lives
 	SDL_Surface *scoreSurface, *livesSurface;
@@ -114,6 +117,9 @@ public:
 
 	//update score method
 	void UpdateLives(SDL_Renderer *renderer);
+
+	//reset the player
+	void Reset();
 
 private:
 

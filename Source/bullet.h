@@ -50,6 +50,9 @@ public:
 	//bullet draw - requires renderer be passed
 	void Draw(SDL_Renderer *renderer);
 
+	//Bullet reset
+	void Reset();
+
 	//bullet deconstructer
 	~Bullet();
 
